@@ -5,6 +5,7 @@
 #include <thread>
 #include <fstream>
 #include <string>
+#include <string.h>
 
 #ifdef _MSC_VER
 #include <boost/program_options.hpp>
@@ -97,6 +98,8 @@ void newRawImageFn(const void* newImage, const ClariusRawImageInfo* nfo, int npo
 #endif
 }
 
+int imageNum = 0;
+
 /// callback for a new image sent from the scanner
 /// @param[in] newImage a pointer to the raw image bits
 /// @param[in] nfo the image properties
@@ -111,22 +114,45 @@ void newProcessedImageFn(const void* newImage, const ClariusProcessedImageInfo* 
     memcpy(_image.data(), newImage, sz);
 
     // !!! filepaths
-    char filename[] = "images/clariusimage.raw";
-    char oldname[] = "C:/Users/sadie/Documents/MQP/build-caster-Desktop_Qt_6_2_1_MinGW_64_bit-Debug/images/clariusimage.raw";
-    char newname[] = "C:/Users/sadie/Documents/MQP/movedImages/clariusimage.raw";
+    std::string stringFN;
+    std::string fn = "images/clariusimage";
+    std::string numString = std::to_string(imageNum);
+    std::string ext = ".raw";
+
+    stringFN += numString + ext;
+
+    int n = stringFN.length();
+
+    // declaring character array
+    char filename[n + 1];
+
+    // copying the contents of the
+    // string to char array
+    strcpy(filename, stringFN.c_str());
+
+    //char oldname[] = "C:/Users/sadie/Documents/MQP/build-caster-Desktop_Qt_6_2_1_MinGW_64_bit-Debug/images/clariusimage.raw";
+    //char newname[] = "C:/Users/sadie/Documents/MQP/movedImages/clariusimage.raw";
 
     // !!!code
     FILE * fp;
     fp = fopen(filename, "wb");
+
     fwrite(newImage, sizeof(int32_t), nfo->width * nfo->height, fp);
+    imageNum++;
 
 
-    //	deletes the file if exists
+    /*	deletes the file if exists
     if (rename(oldname, newname) != 0){
         perror("Error moving file");
     }
+    */
+
+    std::cout << "filename: " << filename;
 
     fclose(fp);
+
+
+    std::cout << "file closed";
 
     PRINTSL << "new image (" << counter_++ << "): " << nfo->width << " x " << nfo->height << " @ " << nfo->bitsPerPixel << " bpp. @ "
             << nfo->imageSize << "bytes. @ " << nfo->micronsPerPixel << " microns per pixel. imu points: " << npos << std::flush;
@@ -311,7 +337,7 @@ int init(int& argc, char** argv)
 
     //  !!!ip and port
     ipAddr = "192.168.1.1";
-    port = 40325;
+    port = 45921;
     keydir = "C:/keys";
 
     // check command line options
@@ -334,17 +360,17 @@ int init(int& argc, char** argv)
 //        }
 
 
-//    if (!ipAddr.size())
-//    {
-//        ERROR << "no ip address provided. run with '-a [addr]" << std::endl;
-//        return FAILURE;
-//    }
+    if (!ipAddr.size())
+    {
+       ERROR << "no ip address provided. run with '-a [addr]" << std::endl;
+        return FAILURE;
+    }
 
-//    if (!port)
-//    {
-//        ERROR << "no casting port provided. run with '-p [port]" << std::endl;
-//        return FAILURE;
-//    }
+    if (!port)
+    {
+        ERROR << "no casting port provided. run with '-p [port]" << std::endl;
+        return FAILURE;
+    }
 #endif
 
     PRINT << "starting caster...";
@@ -387,4 +413,5 @@ int main(int argc, char* argv[])
 
     cusCastDestroy();
     return rcode;
+    return 0;
 }
